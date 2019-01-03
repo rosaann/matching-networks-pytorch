@@ -36,6 +36,8 @@ class OmniglotNShotDataset():
      #       np.random.shuffle(self.x)
       #  self.x_train, self.x_val, self.x_test = self.x[:1200], self.x[1200:1411], self.x[1411:]
         # self.mean = np.mean(list(self.x_train) + list(self.x_val))
+        self.indexes_of_folders_indicating_class=[-2, -3]
+
         self.x_train, self.x_val, self.x_test = self.load_dataset()
         self.x_train = self.processes_batch(self.x_train, np.mean(self.x_train), np.std(self.x_train))
         self.x_test = self.processes_batch(self.x_test, np.mean(self.x_test), np.std(self.x_test))
