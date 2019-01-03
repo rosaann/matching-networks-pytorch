@@ -25,8 +25,10 @@ class OmniglotNShotDataset():
         np.random.seed(seed)
         print('enter 1')
         self.x = np.load('data/data.npy')
+        print('x ', self.x)
         print('enter x.shape ', self.x.shape)
         self.x = np.reshape(self.x, newshape=(self.x.shape[0], self.x.shape[1], 28, 28, 1))
+        print('enter after x.shape ', self.x.shape)
         if shuffle:
             np.random.shuffle(self.x)
         self.x_train, self.x_val, self.x_test = self.x[:1200], self.x[1200:1411], self.x[1411:]
