@@ -13,6 +13,7 @@ import os
 import pickle
 import tqdm
 import concurrent.futures
+import cv2
 
 class OmniglotNShotDataset():
     def __init__(self, batch_size, classes_per_set=20, samples_per_class=1, seed=2017, shuffle=True, use_cache=True):
@@ -130,6 +131,25 @@ class OmniglotNShotDataset():
       #  if self.labels_as_int:
       #      label = int(label)
         return label
+    
+    def load_test_image(self, filepath):
+        try:
+            image = cv2.imread(filepath)
+            image = cv2.resize(image, dsize=(28, 28))
+        except RuntimeWarning:
+            os.system("convert {} -strip {}".format(filepath, filepath))
+            print("converting")
+            image = cv2.imread(filepath)
+            image = cv2.resize(image, dsize=(28, 28))
+        except:
+            print("Broken image")
+            os.remove(filepath)
+
+        if image is not None:
+            return filepath
+        else:
+            os.remove(filepath)
+            return None
     def save_dict(self, obj, name):
         with open(name, 'wb') as f:
             pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
