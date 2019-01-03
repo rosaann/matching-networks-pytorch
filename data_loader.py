@@ -127,8 +127,8 @@ class OmniglotNShotDataset():
     def get_label_from_path(self, filepath):
         label_bits = filepath.split("/")
         label = "_".join([label_bits[idx] for idx in self.indexes_of_folders_indicating_class])
-        if self.labels_as_int:
-            label = int(label)
+      #  if self.labels_as_int:
+      #      label = int(label)
         return label
     def save_dict(self, obj, name):
         with open(name, 'wb') as f:
