@@ -10,6 +10,9 @@
 
 import numpy as np
 import os
+import pickle
+import tqdm
+import concurrent.futures
 
 class OmniglotNShotDataset():
     def __init__(self, batch_size, classes_per_set=20, samples_per_class=1, seed=2017, shuffle=True, use_cache=True):
@@ -24,13 +27,13 @@ class OmniglotNShotDataset():
         """
         np.random.seed(seed)
         print('enter 1')
-        self.x = np.load('data/data.npy')
-        print('x ', self.x)
-        print('enter x.shape ', self.x.shape)
-        self.x = np.reshape(self.x, newshape=(self.x.shape[0], self.x.shape[1], 28, 28, 1))
-        print('enter after x.shape ', self.x.shape)
-        if shuffle:
-            np.random.shuffle(self.x)
+      #  self.x = np.load('data/data.npy')
+      #  print('x ', self.x)
+      #  print('enter x.shape ', self.x.shape)
+      #  self.x = np.reshape(self.x, newshape=(self.x.shape[0], self.x.shape[1], 28, 28, 1))
+     #   print('enter after x.shape ', self.x.shape)
+     #   if shuffle:
+     #       np.random.shuffle(self.x)
       #  self.x_train, self.x_val, self.x_test = self.x[:1200], self.x[1200:1411], self.x[1411:]
         # self.mean = np.mean(list(self.x_train) + list(self.x_val))
         self.x_train, self.x_val, self.x_test = self.load_dataset()
@@ -119,6 +122,15 @@ class OmniglotNShotDataset():
 
 
         return data_image_path_dict, idx_to_label_name, label_name_to_idx
+    
+    def save_dict(self, obj, name):
+        with open(name, 'wb') as f:
+            pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+
+    def load_dict(self, name):
+        with open(name, 'rb') as f:
+            return pickle.load(f)
+        
     def processes_batch(self, x_batch, mean, std):
         """
         Normalizes a batch images
