@@ -75,10 +75,10 @@ class OmniglotNShotDataset():
         self.index_to_label_name_dict_file = "datasets/map_to_label_name_{}.pkl".format(self.dataset_name)
         self.label_name_to_map_dict_file = "datasets/label_name_to_map_{}.pkl".format(self.dataset_name)
 
-        if self.reset_stored_filepaths == True:
-            if os.path.exists(data_path_file):
-                os.remove(data_path_file)
-                self.reset_stored_filepaths=False
+     #   if self.reset_stored_filepaths == True:
+     #       if os.path.exists(data_path_file):
+     #           os.remove(data_path_file)
+     #           self.reset_stored_filepaths=False
 
         try:
             data_image_paths = self.load_dict(data_path_file)
