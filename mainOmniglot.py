@@ -14,7 +14,7 @@ from OmniglotBuilder import OmniglotBuilder
 import tqdm
 
 # Experiment setup
-batch_size = 20
+batch_size = 22
 fce = True
 classes_per_set = 20
 samples_per_class = 1

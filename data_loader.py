@@ -65,10 +65,12 @@ class OmniglotNShotDataset():
         data_root = "./datasets/omniglot_dataset/"
         alphabets = os.listdir(data_root + "images_background")
         for alphabet in alphabets:
-            characters = os.listdir(os.path.join(data_root, "images_background", alphabet))
+            characters = os.listdir(os.path.join(data_root, "images_background", alphabet))           
             for character in characters:
+                
                 files = os.listdir(os.path.join(data_root, "images_background", alphabet, character))
                 examples = []
+             #   print('example ', files)
                 for img_file in files:
                     img = misc.imresize(
                     misc.imread(os.path.join(data_root, "images_background", alphabet, character, img_file)), [28, 28])
@@ -127,7 +129,10 @@ class OmniglotNShotDataset():
             support_set_y[i] = np.expand_dims(y_temp[:], axis=1)
             target_x[i] = x_temp[choose_label, -1]
             target_y[i] = y_temp[choose_label]
-
+        print('support_set_x ', support_set_x.shape)
+        print('support_set_y ', support_set_y.shape)
+        print('target_x ', target_x.shape)
+        print('target_y ', target_y.shape)
         return support_set_x, support_set_y, target_x, target_y
 
     def _rotate_data(self, image, k):
