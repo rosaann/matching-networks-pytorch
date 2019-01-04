@@ -14,6 +14,7 @@ import pickle
 import tqdm
 import concurrent.futures
 import cv2
+from scipy import misc
 
 class OmniglotNShotDataset():
     def __init__(self, batch_size, classes_per_set=20, samples_per_class=1, seed=2017, shuffle=True, use_cache=True):
@@ -28,18 +29,19 @@ class OmniglotNShotDataset():
         """
         np.random.seed(seed)
         print('enter 1')
-      #  self.x = np.load('data/data.npy')
-      #  print('x ', self.x)
-      #  print('enter x.shape ', self.x.shape)
-      #  self.x = np.reshape(self.x, newshape=(self.x.shape[0], self.x.shape[1], 28, 28, 1))
-     #   print('enter after x.shape ', self.x.shape)
-     #   if shuffle:
-     #       np.random.shuffle(self.x)
-      #  self.x_train, self.x_val, self.x_test = self.x[:1200], self.x[1200:1411], self.x[1411:]
-        # self.mean = np.mean(list(self.x_train) + list(self.x_val))
+     #   self.x = np.load('data/data.npy')
+        self.x = self.load_dataset_this()
+     #   print('x ', self.x)
+        print('enter x.shape ', self.x.shape)
+        self.x = np.reshape(self.x, newshape=(self.x.shape[0], self.x.shape[1], 28, 28, 1))
+        print('enter after x.shape ', self.x.shape)
+        if shuffle:
+            np.random.shuffle(self.x)
+        self.x_train, self.x_val, self.x_test = self.x[:1200], self.x[1200:1411], self.x[1411:]
+        self.mean = np.mean(list(self.x_train) + list(self.x_val))
         self.indexes_of_folders_indicating_class=[-2, -3]
         self.train_val_test_split=(1200/1622, 211/1622, 211/1622)
-        self.x_train, self.x_val, self.x_test = self.load_dataset()
+        
         self.x_train = self.processes_batch(self.x_train, np.mean(self.x_train), np.std(self.x_train))
         self.x_test = self.processes_batch(self.x_test, np.mean(self.x_test), np.std(self.x_test))
         self.x_val = self.processes_batch(self.x_val, np.mean(self.x_val), np.std(self.x_val))
@@ -55,108 +57,40 @@ class OmniglotNShotDataset():
             self.cached_datatset = {"train": self.load_data_cache(self.x_train),
                                     "val": self.load_data_cache(self.x_val),
                                     "test": self.load_data_cache(self.x_test)}
-    def load_dataset(self):
-        data_image_paths, index_to_label_name_dict_file, label_to_index = self.load_datapaths()
-        total_label_types = len(data_image_paths)
-        print(total_label_types)
-        # data_image_paths = self.shuffle(data_image_paths)
-        x_train_id, x_val_id, x_test_id = int(self.train_val_test_split[0] * total_label_types), \
-                                          int(np.sum(self.train_val_test_split[:2]) * total_label_types), \
-                                          int(total_label_types)
-        print(x_train_id, x_val_id, x_test_id)
-        x_train_classes = (class_key for class_key in list(data_image_paths.keys())[:x_train_id])
-        x_val_classes = (class_key for class_key in list(data_image_paths.keys())[x_train_id:x_val_id])
-        x_test_classes = (class_key for class_key in list(data_image_paths.keys())[x_val_id:x_test_id])
-        x_train, x_val, x_test = {class_key: data_image_paths[class_key] for class_key in x_train_classes}, \
-                                 {class_key: data_image_paths[class_key] for class_key in x_val_classes}, \
-                                 {class_key: data_image_paths[class_key] for class_key in x_test_classes},
-        return x_train, x_val, x_test
     
-    def load_datapaths(self):
-        self.dataset_name = "omniglot_dataset"
-        data_path_file = "datasets/{}.pkl".format(self.dataset_name)
-        self.index_to_label_name_dict_file = "datasets/map_to_label_name_{}.pkl".format(self.dataset_name)
-        self.label_name_to_map_dict_file = "datasets/label_name_to_map_{}.pkl".format(self.dataset_name)
+    def load_dataset_this(self):
+        dataset = []
+        examples = []
+        # images_background
+        data_root = "./datasets/omniglot_dataset/"
+        alphabets = os.listdir(data_root + "images_background")
+        for alphabet in alphabets:
+            characters = os.listdir(os.path.join(data_root, "images_background", alphabet))
+            for character in characters:
+                files = os.listdir(os.path.join(data_root, "images_background", alphabet, character))
+                examples = []
+                for img_file in files:
+                    img = misc.imresize(
+                    misc.imread(os.path.join(data_root, "images_background", alphabet, character, img_file)), [28, 28])
+                    # img = (np.float32(img) / 255.).flatten()
+                    examples.append(img)
+                dataset.append(examples)
 
-     #   if self.reset_stored_filepaths == True:
-     #       if os.path.exists(data_path_file):
-     #           os.remove(data_path_file)
-     #           self.reset_stored_filepaths=False
-
-        try:
-            data_image_paths = self.load_dict(data_path_file)
-            label_to_index = self.load_dict(name=self.label_name_to_map_dict_file)
-            index_to_label_name_dict_file = self.load_dict(name=self.index_to_label_name_dict_file)
-            return data_image_paths, index_to_label_name_dict_file, label_to_index
-        except:
-            print("Mapped data paths can't be found, remapping paths..")
-            data_image_paths, code_to_label_name, label_name_to_code = self.get_data_paths()
-            self.save_dict(data_image_paths, name=data_path_file)
-            self.save_dict(code_to_label_name, name=self.index_to_label_name_dict_file)
-            self.save_dict(label_name_to_code, name=self.label_name_to_map_dict_file)
-            return self.load_datapaths()
-        
-    def get_data_paths(self):
-        self.data_path = "datasets/omniglot_dataset"
-
-        print("Get images from", self.data_path)
-        data_image_path_list_raw = []
-        labels = set()
-        for subdir, dir, files in os.walk(self.data_path):
-            for file in files:
-                if (".jpeg") in file.lower() or (".png") in file.lower() or (".jpg") in file.lower():
-                    filepath = os.path.join(subdir, file)
-                    label = self.get_label_from_path(filepath)
-                    data_image_path_list_raw.append(filepath)
-                    labels.add(label)
-
-        labels = sorted(labels)
-        idx_to_label_name = {idx: label for idx, label in enumerate(labels)}
-        label_name_to_idx = {label: idx for idx, label in enumerate(labels)}
-        data_image_path_dict = {idx: [] for idx in list(idx_to_label_name.keys())}
-        with tqdm.tqdm(total=len(data_image_path_list_raw)) as pbar_error:
-            with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
-                # Process the list of files, but split the work across the process pool to use all CPUs!
-                for image_file in executor.map(self.load_test_image, (data_image_path_list_raw)):
-                    pbar_error.update(1)
-                    if image_file is not None:
-                        label = self.get_label_from_path(image_file)
-                        data_image_path_dict[label_name_to_idx[label]].append(image_file)
-
-
-        return data_image_path_dict, idx_to_label_name, label_name_to_idx
-    def get_label_from_path(self, filepath):
-        label_bits = filepath.split("/")
-        label = "_".join([label_bits[idx] for idx in self.indexes_of_folders_indicating_class])
-      #  if self.labels_as_int:
-      #      label = int(label)
-        return label
-    
-    def load_test_image(self, filepath):
-        try:
-            image = cv2.imread(filepath)
-            image = cv2.resize(image, dsize=(28, 28))
-        except RuntimeWarning:
-            os.system("convert {} -strip {}".format(filepath, filepath))
-            print("converting")
-            image = cv2.imread(filepath)
-            image = cv2.resize(image, dsize=(28, 28))
-        except:
-            print("Broken image")
-            os.remove(filepath)
-
-        if image is not None:
-            return filepath
-        else:
-            os.remove(filepath)
-            return None
-    def save_dict(self, obj, name):
-        with open(name, 'wb') as f:
-            pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
-
-    def load_dict(self, name):
-        with open(name, 'rb') as f:
-            return pickle.load(f)
+# images_evaluation
+        data_root = "./datasets/omniglot_dataset/"
+        alphabets = os.listdir(data_root + "images_evaluation")
+        for alphabet in alphabets:
+            characters = os.listdir(os.path.join(data_root, "images_evaluation", alphabet))
+            for character in characters:
+                files = os.listdir(os.path.join(data_root, "images_evaluation", alphabet, character))
+                examples = []
+                for img_file in files:
+                    img = misc.imresize(
+                     misc.imread(os.path.join(data_root, "images_evaluation", alphabet, character, img_file)), [28, 28])
+            # img = (np.float32(img) / 255.).flatten()
+                    examples.append(img)
+                dataset.append(examples)
+        return np.asarray( dataset)
         
     def processes_batch(self, x_batch, mean, std):
         """

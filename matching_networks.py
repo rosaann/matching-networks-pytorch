@@ -135,7 +135,11 @@ class BidirectionalLSTM(nn.Module):
         if type(h) == Variable:
             return Variable(h.data)
         else:
-            return tuple(self.repackage_hidden(v) for v in h)
+            print('h ', type(h))
+            if type(h) == 'tuple':
+                return tuple(self.repackage_hidden(v) for v in h)
+            else:
+                return h
 
     def forward(self, inputs):
         # self.hidden = self.init_hidden(self.use_cuda)
